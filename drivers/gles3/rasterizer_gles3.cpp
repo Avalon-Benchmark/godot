@@ -411,6 +411,9 @@ void RasterizerGLES3::end_frame(bool p_swap_buffers) {
 	}
 
 	if (p_swap_buffers) {
+#ifdef EGL_ENABLED
+		glFinish();
+#endif
 		OS::get_singleton()->swap_buffers();
 	} else {
 		glFinish();

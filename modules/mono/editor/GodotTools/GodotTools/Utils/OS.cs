@@ -36,6 +36,7 @@ namespace GodotTools.Utils
             public const string Windows = "windows";
             public const string OSX = "osx";
             public const string X11 = "x11";
+            public const string EGL = "egl";
             public const string Server = "server";
             public const string UWP = "uwp";
             public const string Haiku = "haiku";

@@ -675,6 +675,10 @@ bool OS::has_feature(const String &p_feature) {
 	}
 #endif
 
+	if (p_feature == "zero_delay_physics") {
+		return true;
+	}
+
 	if (_check_internal_feature_support(p_feature)) {
 		return true;
 	}

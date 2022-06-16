@@ -103,6 +103,7 @@ Error FileAccessUnix::_open(const String &p_path, int p_mode_flags) {
 	int err = stat(path.utf8().get_data(), &st);
 	if (!err) {
 		switch (st.st_mode & S_IFMT) {
+			case S_IFIFO:
 			case S_IFLNK:
 			case S_IFREG:
 				break;
@@ -291,6 +292,7 @@ bool FileAccessUnix::file_exists(const String &p_path) {
 
 	// See if this is a regular file
 	switch (st.st_mode & S_IFMT) {
+		case S_IFIFO:
 		case S_IFLNK:
 		case S_IFREG:
 			return true;

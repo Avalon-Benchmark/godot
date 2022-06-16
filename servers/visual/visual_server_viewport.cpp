@@ -360,8 +360,10 @@ void VisualServerViewport::draw_viewports() {
 
 			if (vp->viewport_to_screen_rect != Rect2() && (!vp->viewport_render_direct_to_screen || !VSG::rasterizer->is_low_end())) {
 				//copy to screen if set as such
+#ifndef EGL_ENABLED
 				VSG::rasterizer->set_current_render_target(RID());
 				VSG::rasterizer->blit_render_target_to_screen(vp->render_target, vp->viewport_to_screen_rect, vp->viewport_to_screen);
+#endif
 			}
 		}
 

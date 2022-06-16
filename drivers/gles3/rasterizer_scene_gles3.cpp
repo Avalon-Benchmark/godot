@@ -3513,7 +3513,7 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 		//transfer to effect buffer if using buffers, also resolve MSAA
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, storage->frame.current_rt->buffers.fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, storage->frame.current_rt->effects.mip_maps[0].sizes[0].fbo);
-		glBlitFramebuffer(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, 0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBlitFramebuffer(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, 0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -3866,6 +3866,11 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 		glBindFramebuffer(GL_FRAMEBUFFER, storage->frame.current_rt->fbo);
 	}
 
+	int depth_texture_id;
+	glActiveTexture(GL_TEXTURE1);
+	glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depth_texture_id);
+	glBindTexture(GL_TEXTURE_2D, depth_texture_id);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, composite_from);
 	if (env) {
@@ -3965,6 +3970,10 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 	}
 
 	_copy_screen(true, true);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE0);
 
 	//turn off everything used
 	state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_FXAA, false);

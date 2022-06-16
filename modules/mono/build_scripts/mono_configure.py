@@ -59,11 +59,11 @@ def copy_file(src_dir, dst_dir, src_name, dst_name=""):
 
 
 def is_desktop(platform):
-    return platform in ["windows", "osx", "x11", "server", "uwp", "haiku"]
+    return platform in ["windows", "osx", "x11", "egl", "server", "uwp", "haiku"]
 
 
 def is_unix_like(platform):
-    return platform in ["osx", "x11", "server", "android", "haiku", "iphone"]
+    return platform in ["osx", "x11", "egl", "server", "android", "haiku", "iphone"]
 
 
 def module_supports_tools_on(platform):

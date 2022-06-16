@@ -98,7 +98,11 @@ int open_gl(void) {
         "/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL"
     };
 #else
+#ifdef EGL_ENABLED
+    static const char *NAMES[] = {"libOpenGL.so.0", "libOpenGL.so"};
+#else
     static const char *NAMES[] = {"libGL.so.1", "libGL.so"};
+#endif
 #endif
 
     unsigned int index = 0;
@@ -109,6 +113,9 @@ int open_gl(void) {
 #if defined(__APPLE__) || defined(__HAIKU__)
             return 1;
 #else
+#ifdef EGL_ENABLED
+			return 1;
+#endif
             gladGetProcAddressPtr = (PFNGLXGETPROCADDRESSPROC_PRIVATE)dlsym(libGL,
                 "glXGetProcAddressARB");
             return gladGetProcAddressPtr != NULL;
@@ -132,6 +139,10 @@ static
 void* get_proc(const char *namez) {
     void* result = NULL;
     if(libGL == NULL) return NULL;
+
+#if defined(EGL_ENABLED)
+	return eglGetProcAddress(namez);
+#endif
 
 #if !defined(__APPLE__) && !defined(__HAIKU__)
     if(gladGetProcAddressPtr != NULL) {

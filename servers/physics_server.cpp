@@ -796,6 +796,7 @@ void PhysicsServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(BODY_AXIS_ANGULAR_Y);
 	BIND_ENUM_CONSTANT(BODY_AXIS_ANGULAR_Z);
 
+	ClassDB::bind_method(D_METHOD("flush_queries"), &PhysicsServer::flush_queries);
 #endif
 }
 
