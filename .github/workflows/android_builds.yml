@@ -14,7 +14,7 @@ jobs:
   android-template:
     runs-on: "ubuntu-20.04"
 
-    name: Template (target=release, tools=no)
+    name: Android template
 
     steps:
       - uses: actions/checkout@v2

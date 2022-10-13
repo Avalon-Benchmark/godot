@@ -16,4 +16,4 @@ runs:
       with:
         name: ${{ inputs.name }}
         path: ${{ inputs.path }}
-        retention-days: 14
+        retention-days: 90

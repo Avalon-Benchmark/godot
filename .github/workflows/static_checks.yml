@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   static-checks:
-    name: Static Checks (clang-format, black format, file format, documentation checks)
+    name: Static Checks
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout

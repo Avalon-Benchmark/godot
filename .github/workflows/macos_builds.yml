@@ -18,13 +18,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Editor (target=release_debug, tools=yes)
+          - name: MacOS editor
             cache-name: macos-editor
             target: release_debug
             tools: true
             bin: "./bin/godot.osx.opt.tools.64"
 
-          - name: Template (target=release, tools=no)
+          - name: MacOS template
             cache-name: macos-template
             target: release
             tools: false

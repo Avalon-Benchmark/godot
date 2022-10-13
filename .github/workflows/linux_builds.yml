@@ -3,8 +3,9 @@ on: [push, pull_request]
 
 # Global Settings
 env:
+  BUILD_NAME: avalon
   GODOT_BASE_BRANCH: 3.4
-  SCONSFLAGS: verbose=yes warnings=all werror=yes
+  SCONSFLAGS: verbose=yes warnings=all debug_symbols=true separate_debug_symbols=true
 
 concurrency:
   group: ci-${{github.actor}}-${{github.head_ref || github.run_number}}-${{github.ref}}-linux
@@ -12,39 +13,29 @@ concurrency:
 
 jobs:
   build-linux:
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-18.04"
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Editor w/ Mono (target=release_debug, tools=yes)
-            cache-name: linux-editor-mono
-            target: release_debug
-            tools: true
-            sconsflags: module_mono_enabled=yes mono_static=yes mono_glue=no
-            bin: "./bin/godot.x11.opt.tools.64.mono"
-            build-mono: true
-            artifact: true
-
-          - name: Editor and sanitizers (target=debug, tools=yes, use_asan=yes, use_ubsan=yes)
-            cache-name: linux-editor-sanitizers
-            target: debug
-            tools: true
-            sconsflags: use_asan=yes use_ubsan=yes
-            test: true
-            bin: "./bin/godot.x11.tools.64s"
-            build-mono: false
-            # Skip 2GiB artifact speeding up action.
-            artifact: false
-
-          - name: Template w/ Mono (target=release, tools=no)
-            cache-name: linux-template-mono
-            target: release
+          - name: EGL runner
+            cache-name: linux-egl-runner
+            platform: egl
             tools: false
-            sconsflags: module_mono_enabled=yes mono_static=yes mono_glue=no debug_symbols=no
-            build-mono: false
-            artifact: true
+            bin: "./bin/godot.egl.opt.debug.64"
+
+          - name: EGL editor
+            cache-name: linux-egl-editor
+            platform: egl
+            tools: true
+            bin: "./bin/godot.egl.opt.tools.64"
+
+          - name: X11 editor
+            cache-name: linux-x11-editor
+            platform: x11
+            tools: true
+            bin: "./bin/godot.x11.opt.tools.64"
 
     steps:
       - uses: actions/checkout@v2
@@ -54,11 +45,11 @@ jobs:
         run: |
           # Azure repositories are not reliable, we need to prevent azure giving us packages.
           sudo rm -f /etc/apt/sources.list.d/*
-          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo cp -f misc/ci/sources-18.04.list /etc/apt/sources.list
           sudo apt-get update
           # The actual dependencies
           sudo apt-get install build-essential pkg-config libx11-dev libxcursor-dev \
-              libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev \
+              libxinerama-dev libegl1-mesa-dev libglu-dev libasound2-dev libpulse-dev \
               libdbus-1-dev libudev-dev libxi-dev libxrandr-dev yasm xvfb wget unzip
 
       - name: Setup Godot build cache
@@ -74,24 +65,8 @@ jobs:
         uses: ./.github/actions/godot-build
         with:
           sconsflags: ${{ env.SCONSFLAGS }} ${{ matrix.sconsflags }}
-          platform: linuxbsd
-          target: ${{ matrix.target }}
-          tools: ${{ matrix.tools }}
-
-      # Generate mono glue
-      - name: Generate Mono glue code
-        if: ${{ matrix.build-mono }}
-        run: |
-          DRI_PRIME=0 xvfb-run ${{ matrix.bin }} --generate-mono-glue modules/mono/glue || true
-
-      # Rebuild with mono
-      - name: Compilation (mono_glue=yes)
-        uses: ./.github/actions/godot-build
-        if: ${{ matrix.build-mono }}
-        with:
-          sconsflags: ${{ env.SCONSFLAGS }} ${{ matrix.sconsflags }} mono_glue=yes
-          platform: linuxbsd
-          target: ${{ matrix.target }}
+          platform: ${{ matrix.platform }}
+          target: release_debug
           tools: ${{ matrix.tools }}
 
       # Download and extract zip archive with project, folder is renamed to be able to easy change used project
@@ -115,6 +90,7 @@ jobs:
         run: |
           DRI_PRIME=0 xvfb-run ${{ matrix.bin }} 30 --video-driver GLES3 --audio-driver Dummy --path test_project 2>&1 | tee sanitizers_log.txt || true
           misc/scripts/check_ci_log.py sanitizers_log.txt
+        continue-on-error: true
 
       # Check class reference
       - name: Check for class reference updates
@@ -124,14 +100,16 @@ jobs:
           echo -e "If a diff is shown, it means that your code/doc changes are incomplete and you should update the class reference with --doctool.\n\n"
           DRI_PRIME=0 xvfb-run ${{ matrix.bin }} --doctool . 2>&1 > /dev/null || true
           git diff --color --exit-code && ! git ls-files --others --exclude-standard | sed -e 's/^/New doc file missing in PR: /' | grep 'xml$'
+        continue-on-error: true
 
-      - name: Prepare artifact
-        if: ${{ matrix.artifact }}
-        run: |
-          strip bin/godot.*
-
-      - name: Upload artifact
+      - name: Upload artifact (binary)
         uses: ./.github/actions/upload-artifact
-        if: ${{ matrix.artifact }}
         with:
           name: ${{ matrix.cache-name }}
+          path: ${{ matrix.bin }}
+
+      - name: Upload artifact (debug symbols)
+        uses: ./.github/actions/upload-artifact
+        with:
+          name: ${{ format('{0}.debugsymbols', matrix.cache-name) }}
+          path: ${{ format('{0}.debugsymbols', matrix.bin) }}

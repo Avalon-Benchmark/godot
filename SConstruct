@@ -101,7 +101,7 @@ env_base.SConsignFile(".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL))
 
 # Build options
 
-customs = ["custom.py"]
+customs = ["custom.py", "custom_egl.py"]
 
 profile = ARGUMENTS.get("profile", "")
 if profile:

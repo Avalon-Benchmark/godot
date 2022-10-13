@@ -21,13 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Editor (target=release_debug, tools=yes)
+          - name: Windows editor
             cache-name: windows-editor
             target: release_debug
             tools: true
             bin: "./bin/godot.windows.opt.tools.64.exe"
 
-          - name: Template (target=release, tools=no)
+          - name: Windows template
             cache-name: windows-template
             target: release
             tools: false
