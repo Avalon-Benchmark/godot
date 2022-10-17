@@ -31,6 +31,10 @@
 #include "context_gl_egl.h"
 
 #ifdef EGL_ENABLED
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include "thirdparty/glad/glad/glad.h"
 
 EGLDisplay ContextGL_EGL::get_display() {
 	PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
@@ -84,7 +88,61 @@ void ContextGL_EGL::make_current() {
 }
 
 void ContextGL_EGL::swap_buffers() {
+	if (mmap_path == NULL) {
+		eglSwapBuffers(eglDpy, eglSurf);
+		return;
+	}
+
+	if (mmap_pbo_id == 0) {
+		glGenBuffers(1, &mmap_pbo_id);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, mmap_pbo_id);
+		glBufferData(GL_PIXEL_PACK_BUFFER, mmap_size, NULL, GL_STREAM_READ);
+		glReadPixels(0, 0, mmap_size_x, mmap_size_y, GL_RGBA, GL_UNSIGNED_BYTE, (void*)0);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+	}
+
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, mmap_pbo_id);
+	void *ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+	memcpy(mmap_data, ptr, mmap_size);
+	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+
 	eglSwapBuffers(eglDpy, eglSurf);
+
+	glBufferData(GL_PIXEL_PACK_BUFFER, mmap_size, NULL, GL_STREAM_READ);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, mmap_size_x, mmap_size_y, GL_RGBA, GL_UNSIGNED_BYTE, (void*)0);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+}
+
+void ContextGL_EGL::set_buffer_mmap(const int width, const int height) {
+	if (mmap_data) {
+		munmap(mmap_data, mmap_size);
+	}
+	if (mmap_file > 0) {
+		close(mmap_file);
+	}
+	if (mmap_path) {
+		mmap_file = open(mmap_path, O_RDWR | O_CREAT | O_TRUNC, 0666);
+		mmap_size_x = width;
+		mmap_size_y = height;
+		mmap_size_z = 4;
+		mmap_size = mmap_size_x * mmap_size_y * mmap_size_z;
+		if (ftruncate(mmap_file, mmap_size)) {
+			mmap_size = 0;
+			mmap_data = NULL;
+		} else {
+			mmap_data = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, mmap_file, 0);
+		}
+		mmap_pbo_id = 0;
+	} else {
+		mmap_file = -1;
+		mmap_size_x = 0;
+		mmap_size_y = 0;
+		mmap_size_y = 0;
+		mmap_size = 0;
+		mmap_data = NULL;
+		mmap_pbo_id = 0;
+	}
 }
 
 void ContextGL_EGL::set_buffer_size(const int width, const int height) {
@@ -98,6 +156,8 @@ void ContextGL_EGL::set_buffer_size(const int width, const int height) {
 	};
 	eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs);
 	eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+
+	set_buffer_mmap(width, height);
 }
 
 Error ContextGL_EGL::initialize(const int width, const int height) {
@@ -152,7 +212,9 @@ Error ContextGL_EGL::initialize(const int width, const int height) {
 
 	eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
 
+	set_buffer_mmap(width, height);
 	set_use_vsync(false);
+
 	return OK;
 }
 
@@ -186,6 +248,14 @@ ContextGL_EGL::ContextGL_EGL(const OS::VideoMode &p_default_video_mode, ContextT
 	direct_render = false;
 	egl_major = 0;
 	egl_minor = 0;
+	mmap_path = getenv("EGL_MMAP_PATH");
+	mmap_file = -1;
+	mmap_size_x = 0;
+	mmap_size_y = 0;
+	mmap_size_z = 0;
+	mmap_size = 0;
+	mmap_data = NULL;
+	mmap_pbo_id = 0;
 }
 
 ContextGL_EGL::~ContextGL_EGL() {

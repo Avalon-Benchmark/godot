@@ -57,6 +57,14 @@ private:
 	bool direct_render;
 	EGLint egl_major;
 	EGLint egl_minor;
+	const char* mmap_path;
+	size_t mmap_size_x;
+	size_t mmap_size_y;
+	size_t mmap_size_z;
+	size_t mmap_size;
+	int mmap_file;
+	void* mmap_data;
+	unsigned int mmap_pbo_id;
 	bool use_vsync;
 	ContextType context_type;
 	EGLDisplay get_display();
@@ -65,6 +73,7 @@ public:
 	void release_current();
 	void make_current();
 	void swap_buffers();
+	void set_buffer_mmap(const int width, const int height);
 	void set_buffer_size(const int width, const int height);
 	int get_window_width();
 	int get_window_height();
