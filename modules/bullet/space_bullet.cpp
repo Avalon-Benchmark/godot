@@ -356,7 +356,8 @@ SpaceBullet::SpaceBullet() :
 		linear_damp(0.0),
 		angular_damp(0.0),
 		contactDebugCount(0),
-		delta_time(0.) {
+		delta_time(0.),
+		substeps(GLOBAL_DEF("physics/3d/bullet/substeps", 0)) {
 	create_empty_world(GLOBAL_DEF("physics/3d/active_soft_world", true));
 	direct_access = memnew(BulletPhysicsDirectSpaceState(this));
 }
@@ -375,7 +376,8 @@ void SpaceBullet::flush_queries() {
 
 void SpaceBullet::step(real_t p_delta_time) {
 	delta_time = p_delta_time;
-	dynamicsWorld->stepSimulation(p_delta_time, 0, 0);
+	float time_step = substeps ? p_delta_time / substeps : 0.0;
+	dynamicsWorld->stepSimulation(p_delta_time, substeps, time_step);
 }
 
 void SpaceBullet::set_param(PhysicsServer::AreaParameter p_param, const Variant &p_value) {
@@ -638,6 +640,7 @@ void SpaceBullet::create_empty_world(bool p_create_soft_world) {
 	gCalculateCombinedFrictionCallback = &calculateGodotCombinedFriction;
 	gContactAddedCallback = &godotContactAddedCallback;
 
+	dynamicsWorld->getDispatchInfo().m_allowedCcdPenetration = GLOBAL_DEF("physics/3d/bullet/ccd_allowed_penetration", 0.04);
 	dynamicsWorld->setWorldUserInfo(this);
 
 	dynamicsWorld->setInternalTickCallback(onBulletTickCallback, this, false);

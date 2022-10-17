@@ -30,6 +30,8 @@
 
 #include "rigid_body_bullet.h"
 
+#include "core/project_settings.h"
+
 #include "btRayShape.h"
 #include "bullet_physics_server.h"
 #include "bullet_types_converter.h"
@@ -761,9 +763,14 @@ void RigidBodyBullet::set_continuous_collision_detection(bool p_enable) {
 			btVector3 center;
 			btBody->getCollisionShape()->getBoundingSphere(center, radius);
 		}
-		btBody->setCcdSweptSphereRadius(radius * 0.2);
+		btScalar radius_factor(GLOBAL_DEF("physics/3d/bullet/ccd_radius_factor", 0.2));
+		btBody->setCcdSweptSphereRadius(radius * radius_factor);
 	} else {
-		btBody->setCcdMotionThreshold(10000.0);
+		if (GLOBAL_DEF("physics/3d/bullet/ccd_only_on_demand", false)) {
+			btBody->setCcdMotionThreshold(10000.0);
+		} else {
+			btBody->setCcdMotionThreshold(0.0);
+		}
 		btBody->setCcdSweptSphereRadius(0.);
 	}
 }
@@ -843,7 +850,13 @@ void RigidBodyBullet::reload_shapes() {
 	btBody->updateInertiaTensor();
 
 	reload_kinematic_shapes();
-	set_continuous_collision_detection(btBody->getCcdMotionThreshold() < 9998.0);
+
+	if (GLOBAL_DEF("physics/3d/bullet/ccd_only_on_demand", false)) {
+		set_continuous_collision_detection(btBody->getCcdMotionThreshold() < 9998.0);
+	} else {
+		set_continuous_collision_detection(is_continuous_collision_detection_enabled());
+	}
+
 	reload_body();
 }
 

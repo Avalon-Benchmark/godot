@@ -116,6 +116,8 @@ class SpaceBullet : public RIDBullet {
 	int contactDebugCount;
 	real_t delta_time;
 
+	int substeps;
+
 public:
 	SpaceBullet();
 	virtual ~SpaceBullet();
