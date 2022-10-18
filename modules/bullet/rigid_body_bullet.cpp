@@ -767,9 +767,9 @@ void RigidBodyBullet::set_continuous_collision_detection(bool p_enable) {
 		btBody->setCcdSweptSphereRadius(radius * radius_factor);
 	} else {
 		if (GLOBAL_DEF("physics/3d/bullet/ccd_only_on_demand", false)) {
-			btBody->setCcdMotionThreshold(10000.0);
-		} else {
 			btBody->setCcdMotionThreshold(0.0);
+		} else {
+			btBody->setCcdMotionThreshold(10000.0);
 		}
 		btBody->setCcdSweptSphereRadius(0.);
 	}
@@ -852,9 +852,9 @@ void RigidBodyBullet::reload_shapes() {
 	reload_kinematic_shapes();
 
 	if (GLOBAL_DEF("physics/3d/bullet/ccd_only_on_demand", false)) {
-		set_continuous_collision_detection(btBody->getCcdMotionThreshold() < 9998.0);
-	} else {
 		set_continuous_collision_detection(is_continuous_collision_detection_enabled());
+	} else {
+		set_continuous_collision_detection(btBody->getCcdMotionThreshold() < 9998.0);
 	}
 
 	reload_body();
