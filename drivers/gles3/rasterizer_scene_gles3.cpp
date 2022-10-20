@@ -3871,6 +3871,12 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 	glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depth_texture_id);
 	glBindTexture(GL_TEXTURE_2D, depth_texture_id);
 
+	if (Engine::get_singleton()->is_editor_hint()) {
+		state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, false);
+	} else {
+		state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, true);
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, composite_from);
 	if (env) {
@@ -3998,6 +4004,7 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 	state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_BCS, false);
 	state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_COLOR_CORRECTION, false);
 	state.tonemap_shader.set_conditional(TonemapShaderGLES3::V_FLIP, false);
+	state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, false);
 }
 
 bool RasterizerSceneGLES3::_element_needs_directional_add(RenderList::Element *e) {

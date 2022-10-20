@@ -475,11 +475,15 @@ void main() {
 	color = apply_color_correction(color, color_correction);
 #endif
 
+#ifdef USE_ALPHA_DEPTH_CHANNEL
 	highp float depth = textureLod(sdepth, uv_interp, 0.0f).r;
-	const float d_min = 0.01;  // camera near
-	const float d_max = 1000;  // camera far
+	const float d_min = 0.01f;  // camera near
+	const float d_max = 1000f;  // camera far
 	depth = d_min / ((1.0 - depth) + (d_min / d_max));
 	depth = clamp(1.0 / (depth + 0.5), 0.0, 1.0);
+#else
+	float depth = 1.0f;
+#endif
 
 	frag_color = vec4(color, depth);
 }
