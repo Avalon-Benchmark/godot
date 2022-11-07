@@ -3874,7 +3874,7 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 	if (Engine::get_singleton()->is_editor_hint()) {
 		state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, false);
 	} else {
-		state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, true);
+		state.tonemap_shader.set_conditional(TonemapShaderGLES3::USE_ALPHA_DEPTH_CHANNEL, false);
 	}
 
 	glActiveTexture(GL_TEXTURE0);
