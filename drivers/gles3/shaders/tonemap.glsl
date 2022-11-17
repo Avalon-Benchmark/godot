@@ -477,8 +477,8 @@ void main() {
 
 #ifdef USE_ALPHA_DEPTH_CHANNEL
 	highp float depth = textureLod(sdepth, uv_interp, 0.0f).r;
-	const float d_min = 0.01f;  // camera near
-	const float d_max = 1000f;  // camera far
+	const float d_min = 0.01f;    // camera near
+	const float d_max = 1000.0f;  // camera far
 	depth = d_min / ((1.0 - depth) + (d_min / d_max));
 	depth = clamp(1.0 / (depth + 0.5), 0.0, 1.0);
 #else
